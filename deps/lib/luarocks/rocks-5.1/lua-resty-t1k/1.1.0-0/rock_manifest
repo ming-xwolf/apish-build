@@ -1,0 +1,23 @@
+rock_manifest = {
+   doc = {
+      LICENSE = "dabc32880b879e2acea1b71f95051276",
+      ["README.md"] = "d045bf1d99a02ef86d6fffad2c9ec4ea"
+   },
+   lua = {
+      resty = {
+         t1k = {
+            ["buffer.lua"] = "c35cf53646ca95fb0d029e9ffdd6b14f",
+            ["constants.lua"] = "11a121a1559bcb52008c8a66728512b6",
+            ["file.lua"] = "d687adb2876fd1635d68122ceff050ce",
+            ["filter.lua"] = "227b6b45e62c012b78cd0b8e304d8490",
+            ["handler.lua"] = "158ec5bbd787c362dae6a6e43ded7e72",
+            ["log.lua"] = "e19e02b671f7bab8a36d55e12b02ef5b",
+            ["request.lua"] = "7e3f593f5e06a43db28653ee3df1aa44",
+            ["utils.lua"] = "f048a3a5f3f5198fe251d2a1ed2ce0a4",
+            ["uuid.lua"] = "952d982bc55ce98f4a966d04091ce94e"
+         },
+         ["t1k.lua"] = "e4e54a8f10d4c6772dcddeb9052d3a46"
+      }
+   },
+   ["lua-resty-t1k-1.1.0-0.rockspec"] = "21e6ad513aa574756ff4931ce7c638b1"
+}
