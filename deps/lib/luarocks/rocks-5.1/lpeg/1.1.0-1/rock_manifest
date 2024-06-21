@@ -3,7 +3,7 @@ rock_manifest = {
       ["README.md"] = "d39f724cf242c936b31a1169504d4e42"
    },
    lib = {
-      ["lpeg.so"] = "30951d2fcfa7deb62e9676793cd77876"
+      ["lpeg.so"] = "1b7f96204010a69ade848c405759c49e"
    },
    ["lpeg-1.1.0-1.rockspec"] = "4a97b75f42f1a3e1cb6ee328957cf6df",
    lua = {

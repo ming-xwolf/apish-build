@@ -4,7 +4,7 @@ rock_manifest = {
       ["README.md"] = "5ffb82bf7248538f16645889fdc2f447"
    },
    lib = {
-      ["lua_pack.so"] = "dac5e401c19b8684aabb4aadc20c4100"
+      ["lua_pack.so"] = "55d4c38357e8c10890194a52c91385ac"
    },
    ["lua_pack-2.0.0-0.rockspec"] = "488f5fe2531b0baf1da5da62dc7c001b"
 }

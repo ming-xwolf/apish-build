@@ -12,7 +12,7 @@ rock_manifest = {
       ["news.md"] = "4fe04271b415f7bc183ff77626c5018e"
    },
    lib = {
-      ["lualdap.so"] = "35fadd2f3ba09f9ac5b0c6778aa27784"
+      ["lualdap.so"] = "992620f4721de1f56236d53fb41fb4e7"
    },
    ["lualdap-1.2.6-1.rockspec"] = "4274547b1a67bb4d6de455ce890cfcf2"
 }

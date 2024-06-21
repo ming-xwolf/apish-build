@@ -2,6 +2,88 @@
 ## [Unreleased]
 
 
+<a name="1.4.0"></a>
+## [1.4.0] - 2024-05-27
+### bug fixes
+- **ec:** add missing cdef for EC_POINT_free [2093e88](https://github.com/fffonion/lua-resty-openssl/commit/2093e8814ccfbe830ba594a71f05870cac208e9c)
+
+### features
+- **pkey:** allow pkey.new to compose from parameters [91a30f6](https://github.com/fffonion/lua-resty-openssl/commit/91a30f6988e3fc696363ce1445b49a3f6ee8f35e)
+- **pkey:** add pkey:verify_raw [0016308](https://github.com/fffonion/lua-resty-openssl/commit/0016308c9e3a2ccfdfe674ede64e462060f7b13b)
+
+
+<a name="1.3.1"></a>
+## [1.3.1] - 2024-04-22
+### bug fixes
+- **aux/jwk:** remove ecx.d if exporting as public key [9d34ff8](https://github.com/fffonion/lua-resty-openssl/commit/9d34ff8fd79debbcf155f74af0b161083b6a8385)
+- **aux/nginx:** fix the typo of get_socket_ssl in the stream module [ad18b3c](https://github.com/fffonion/lua-resty-openssl/commit/ad18b3c18c7ec3db175aabfbf6928141c3b53b17)
+- **aux/nginx:** remove extra sanity test that prevent usage of lua-kong-nginx-module [2323526](https://github.com/fffonion/lua-resty-openssl/commit/2323526766b131bde94052449c41a331e93288bd)
+
+
+<a name="1.3.0"></a>
+## [1.3.0] - 2024-04-15
+### features
+- **aux/nginx:** use lua-kong-nginx-module's get_socket_ssl when available ([#3](https://github.com/fffonion/lua-resty-openssl/issues/3)) [48c5107](https://github.com/fffonion/lua-resty-openssl/commit/48c51077444e375b2cdd5155693b49d92a82d4a1)
+
+
+<a name="1.2.1"></a>
+## [1.2.1] - 2024-02-27
+### bug fixes
+- **aux/nginx:** support openresty 1.25.3 in FFI path [90b0a47](https://github.com/fffonion/lua-resty-openssl/commit/90b0a47df499b1def08a07a5183ebf6bad8c6095)
+
+
+<a name="1.2.0"></a>
+## [1.2.0] - 2023-12-28
+### bug fixes
+- **compat:** works better with plain luajit [d23b34a](https://github.com/fffonion/lua-resty-openssl/commit/d23b34ae8b3349342d5f82d90dbfe76696dd2ca4)
+
+### features
+- **bn:** add from_mpi, to_mpi and set API [073c943](https://github.com/fffonion/lua-resty-openssl/commit/073c943bf74cce7bd6ce90ee97dfc9b753af3cf2)
+- **cipher:** add set_buffer_size API [3d0a51c](https://github.com/fffonion/lua-resty-openssl/commit/3d0a51ccab0c2dd46f9eb8088fa2f767eff02a61)
+- **mac:** add reset API [40fdbbb](https://github.com/fffonion/lua-resty-openssl/commit/40fdbbbddc078c01ea40b8ec8b21257d0e3fefa6)
+- **openssl:** list functions can now optionally drop provider name [b36ccba](https://github.com/fffonion/lua-resty-openssl/commit/b36ccba3fce9a1b51a0bc8c23d5e9843e99a2052)
+
+### performance improvements
+- **cipher:** improve performance on cipher [ba5de3e](https://github.com/fffonion/lua-resty-openssl/commit/ba5de3e53e1b83de5b8f75d64c83eb3e507f386a)
+- **kdf:** use table.nkeys for params [dac54bf](https://github.com/fffonion/lua-resty-openssl/commit/dac54bf7685d907518e80ab96a594753cdf0c0e1)
+
+
+<a name="1.1.0"></a>
+## [1.1.0] - 2023-12-15
+### features
+- **err:** standardize error format and add new API to get reason and library name [d155657](https://github.com/fffonion/lua-resty-openssl/commit/d155657e60cdfdb0634d0c3147b184e8543b972e)
+- **pkey:** support pass in ctrl str options [2e401b3](https://github.com/fffonion/lua-resty-openssl/commit/2e401b335bce759fe8a7a48d5b23cb33a46cc9ba)
+
+
+<a name="1.0.2"></a>
+## [1.0.2] - 2023-11-21
+### bug fixes
+- **jwk:** fix EC key dump parameters ([#131](https://github.com/fffonion/lua-resty-openssl/issues/131)) [c659347](https://github.com/fffonion/lua-resty-openssl/commit/c659347b356acfcb808ce659ae3094ba7fb2b9f1)
+
+
+<a name="1.0.1"></a>
+## [1.0.1] - 2023-11-07
+### bug fixes
+- **jwk:** return error if exporting private key from public key ([#128](https://github.com/fffonion/lua-resty-openssl/issues/128)) [3a1bc27](https://github.com/fffonion/lua-resty-openssl/commit/3a1bc273e2a3f41faa7eb68f2939fd1fc25cdecb)
+
+
+<a name="1.0.0"></a>
+## [1.0.0] - 2023-11-03
+### code refactoring
+- **\*:** remove unused cdefs [84abc0a](https://github.com/fffonion/lua-resty-openssl/commit/84abc0ab99b3d649c7fe4575cf13867cf96a94ef)
+- **\*:** BREAKING: drop OpenSSL 1.0.2, 1.1.0 and BoringSSL support [99b493e](https://github.com/fffonion/lua-resty-openssl/commit/99b493e671886e68c07b1b9c9472075c22ce38e9)
+
+### features
+- **fips:** add get_fips_version_text [935227b](https://github.com/fffonion/lua-resty-openssl/commit/935227b348ba4416f2f4d671dd94f7910cbf9e61)
+
+
+<a name="0.8.26"></a>
+## [0.8.26] - 2023-10-30
+### bug fixes
+- **version:** add support for all 3.x versions [1516b4d](https://github.com/fffonion/lua-resty-openssl/commit/1516b4d94ac4621a1b243c14b5133ded81515d28)
+- **x509.csr:** remove extension before adding it [d6ed964](https://github.com/fffonion/lua-resty-openssl/commit/d6ed9648e39f46f7519413489baf021092ccbc49)
+
+
 <a name="0.8.25"></a>
 ## [0.8.25] - 2023-09-05
 ### bug fixes
@@ -519,7 +601,17 @@
 - **x509:** export pubkey [ede4f81](https://github.com/fffonion/lua-resty-openssl/commit/ede4f817cb0fe092ad6f9ab5d6ecdcde864a9fd8)
 
 
-[Unreleased]: https://github.com/fffonion/lua-resty-openssl/compare/0.8.25...HEAD
+[Unreleased]: https://github.com/fffonion/lua-resty-openssl/compare/1.4.0...HEAD
+[1.4.0]: https://github.com/fffonion/lua-resty-openssl/compare/1.3.1...1.4.0
+[1.3.1]: https://github.com/fffonion/lua-resty-openssl/compare/1.3.0...1.3.1
+[1.3.0]: https://github.com/fffonion/lua-resty-openssl/compare/1.2.1...1.3.0
+[1.2.1]: https://github.com/fffonion/lua-resty-openssl/compare/1.2.0...1.2.1
+[1.2.0]: https://github.com/fffonion/lua-resty-openssl/compare/1.1.0...1.2.0
+[1.1.0]: https://github.com/fffonion/lua-resty-openssl/compare/1.0.2...1.1.0
+[1.0.2]: https://github.com/fffonion/lua-resty-openssl/compare/1.0.1...1.0.2
+[1.0.1]: https://github.com/fffonion/lua-resty-openssl/compare/1.0.0...1.0.1
+[1.0.0]: https://github.com/fffonion/lua-resty-openssl/compare/0.8.26...1.0.0
+[0.8.26]: https://github.com/fffonion/lua-resty-openssl/compare/0.8.25...0.8.26
 [0.8.25]: https://github.com/fffonion/lua-resty-openssl/compare/0.8.24...0.8.25
 [0.8.24]: https://github.com/fffonion/lua-resty-openssl/compare/0.8.23...0.8.24
 [0.8.23]: https://github.com/fffonion/lua-resty-openssl/compare/0.8.22...0.8.23

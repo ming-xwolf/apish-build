@@ -5,7 +5,7 @@ rock_manifest = {
       ["README.zh.md"] = "0f44879d40d71544227807b54800bc82"
    },
    lib = {
-      ["pb.so"] = "7d43494719adf7d6ec59d7cc40792758"
+      ["pb.so"] = "e38379703106457e1a2e7b8cf9562cc5"
    },
    lua = {
       ["protoc.lua"] = "4669f55499818a5e5baf63c75c13e3f8"

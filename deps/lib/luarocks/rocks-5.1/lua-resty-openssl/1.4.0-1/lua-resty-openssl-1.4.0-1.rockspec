@@ -1,8 +1,8 @@
 package = "lua-resty-openssl"
-version = "0.8.25-1"
+version = "1.4.0-1"
 source = {
    url = "git+https://github.com/fffonion/lua-resty-openssl.git",
-   tag = "0.8.25"
+   tag = "1.4.0"
 }
 description = {
    detailed = "FFI-based OpenSSL binding for LuaJIT.",
@@ -15,6 +15,7 @@ build = {
       ["resty.openssl"] = "lib/resty/openssl.lua",
       ["resty.openssl.asn1"] = "lib/resty/openssl/asn1.lua",
       ["resty.openssl.auxiliary.bio"] = "lib/resty/openssl/auxiliary/bio.lua",
+      ["resty.openssl.auxiliary.compat"] = "lib/resty/openssl/auxiliary/compat.lua",
       ["resty.openssl.auxiliary.ctypes"] = "lib/resty/openssl/auxiliary/ctypes.lua",
       ["resty.openssl.auxiliary.ecdsa"] = "lib/resty/openssl/auxiliary/ecdsa.lua",
       ["resty.openssl.auxiliary.jwk"] = "lib/resty/openssl/auxiliary/jwk.lua",

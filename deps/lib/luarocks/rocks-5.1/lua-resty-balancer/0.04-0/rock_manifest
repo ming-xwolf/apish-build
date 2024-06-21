@@ -3,7 +3,7 @@ rock_manifest = {
       ["README.markdown"] = "9687d10d350c958d441812394bb97177"
    },
    lib = {
-      ["librestychash.so"] = "72adc4e8e863f23f54db2e6cb5349711"
+      ["librestychash.so"] = "089554ea4296a919ae620f36c0cee62f"
    },
    lua = {
       resty = {

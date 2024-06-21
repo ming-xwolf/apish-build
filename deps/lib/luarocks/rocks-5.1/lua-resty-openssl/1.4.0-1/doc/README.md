@@ -1,8 +1,8 @@
 # lua-resty-openssl
 
-FFI-based OpenSSL binding for LuaJIT, supporting OpenSSL 3.1, 3.0, 1.1 and 1.0.2 series.
+FFI-based OpenSSL binding for LuaJIT, supporting OpenSSL 3.x, 1.1 series.
 
-BoringSSL is also supported.
+OpenSSL 1.1.0, 1.0.2 and BoringSSL support has been dropped, but are still available at the [0.x branch](https://github.com/fffonion/lua-resty-openssl/tree/0.x).
 
 ![Build Status](https://github.com/fffonion/lua-resty-openssl/workflows/Tests/badge.svg) ![luarocks](https://img.shields.io/luarocks/v/fffonion/lua-resty-openssl?color=%232c3e67) ![opm](https://img.shields.io/opm/v/fffonion/lua-resty-openssl?color=%23599059)
 
@@ -20,6 +20,7 @@ Table of Contents
     + [openssl.resty_hmac_compat](#opensslresty_hmac_compat)
     + [openssl.get_fips_mode](#opensslget_fips_mode)
     + [openssl.set_fips_mode](#opensslset_fips_mode)
+    + [openssl.get_fips_version_text](#opensslget_fips_version_text)
     + [openssl.set_default_properties](#opensslset_default_properties)
     + [openssl.list_cipher_algorithms](#openssllist_cipher_algorithms)
     + [openssl.list_digest_algorithms](#openssllist_digest_algorithms)
@@ -29,14 +30,18 @@ Table of Contents
   * [resty.openssl.ctx](#restyopensslctx)
     + [ctx.new](#ctxnew)
     + [ctx.free](#ctxfree)
+  * [resty.openssl.err](#restyopensslerr)
+    + [err.format_error](#errformat_error)
+    + [err.get_last_error_code](#errget_last_error_code)
+    + [err.get_lib_error_string](#errget_lib_error_string)
+    + [err.get_reason_error_string](#errget_reason_error_string)
   * [resty.openssl.version](#restyopensslversion)
     + [version_num](#version_num)
     + [version_text](#version_text)
     + [version.version](#versionversion)
     + [version.info](#versioninfo)
     + [version.OPENSSL_3X](#versionOPENSSL_3X)
-    + [version.OPENSSL_11](#versionopenssl_11)
-    + [version.OPENSSL_10](#versionopenssl_10)
+    + [version.OPENSSL_111](#versionopenssl_111)
   * [resty.openssl.provider](#restyopensslprovider)
     + [provider.load](#providerload)
     + [provider.istype](#provideristype)
@@ -61,6 +66,7 @@ Table of Contents
     + [pkey:encrypt](#pkeyencrypt)
     + [pkey:decrypt](#pkeydecrypt)
     + [pkey:sign_raw](#pkeysign_raw)
+    + [pkey:verify_raw](#pkeyverify_raw)
     + [pkey:verify_recover](#pkeyverify_recover)
     + [pkey:derive](#pkeyderive)
     + [pkey:tostring](#pkeytostring)
@@ -69,7 +75,9 @@ Table of Contents
     + [bn.new](#bnnew)
     + [bn.dup](#bndup)
     + [bn.istype](#bnistype)
+    + [bn:set](#bnset)
     + [bn.from_binary, bn:to_binary](#bnfrom_binary-bnto_binary)
+    + [bn.from_mpi, bn:to_mpi](#bnfrom_mpi-bnto_mpi)
     + [bn.from_hex, bn:to_hex](#bnfrom_hex-bnto_hex)
     + [bn.from_dec, bn:to_dec](#bnfrom_dec-bnto_dec)
     + [bn:to_number](#bnto_number)
@@ -84,6 +92,7 @@ Table of Contents
   * [resty.openssl.cipher](#restyopensslcipher)
     + [cipher.new](#ciphernew)
     + [cipher.istype](#cipheristype)
+    + [cipher.set_buffer_size](#cipherset_buffer_size)
     + [cipher:get_provider_name](#cipherget_provider_name)
     + [cipher:gettable_params, cipher:settable_params, cipher:get_param, cipher:set_params](#ciphergettable_params-ciphersettable_params-cipherget_param-cipherset_params)
     + [cipher:encrypt](#cipherencrypt)
@@ -116,6 +125,7 @@ Table of Contents
     + [mac:gettable_params, mac:settable_params, mac:get_param, mac:set_params](#macgettable_params-macsettable_params-macget_param-macset_params)
     + [mac:update](#macupdate)
     + [mac:final](#macfinal)
+    + [mac:reset](#macreset)
   * [resty.openssl.kdf](#restyopensslkdf)
     + [kdf.derive (legacy)](#kdfderive-legacy)
     + [kdf.new](#kdfnew)
@@ -295,10 +305,7 @@ Description
 ===========
 
 `lua-resty-openssl` is a FFI-based OpenSSL binding library, currently
-supports OpenSSL `3.1.x`, `3.0.x`, `1.1.1`, `1.1.0` and `1.0.2` series.
-
-**Note: when using with OpenSSL 1.0.2, it's recommanded to not use this library with other FFI-based OpenSSL binding libraries to avoid potential mismatch of `cdef`.**
-
+supports OpenSSL `3.x` and `1.1.1` series.
 
 [Back to TOC](#table-of-contents)
 
@@ -320,9 +327,6 @@ using `error()` but instead return as last parameter.
 
 Each Lua table returned by `new()` contains a cdata object `ctx`. User are not supposed to manully setting
 `ffi.gc` or calling corresponding destructor of the `ctx` struct (like `*_free` functions).
-
-BoringSSL removes some algorithms and not all functionalities below is supported by BoringSSL. Please
-consul its manual for differences between OpenSSL API.
 
 [Back to TOC](#table-of-contents)
 
@@ -412,7 +416,7 @@ lua-resty-openssl supports following modes:
 
 Compile the module per [security policy](https://www.openssl.org/docs/fips/SecurityPolicy-2.0.2.pdf),
 
-**OpenSSL 3.0.0 fips provider **
+**OpenSSL 3.0.0 fips provider**
 
 Refer to https://wiki.openssl.org/index.php/OpenSSL_3.0 Section 7
 Compile the provider per guide, install the fipsmodule.cnf that
@@ -438,12 +442,13 @@ local c = assert(cipher.new("aes256", "fips=yes"))
 print(c:get_provider_name()) -- prints "fips"
 ```
 
-**BroingSSL fips-20190808 and fips-20210429 (later haven't been certified)**
+[Back to TOC](#table-of-contents)
 
-Compile the module per [security policy](https://csrc.nist.gov/CSRC/media/projects/cryptographic-module-validation-program/documents/security-policies/140sp3678.pdf)
+### openssl.get_fips_version_text
 
-Check if FIPS is acticated by running `assert(openssl.set_fips_mode(true))`.
-BoringSSL doesn't support "turn FIPS mode off" once it's compiled.
+**syntax**: *text, err = openssl.get_fips_version_text()*
+
+Returns the version text of the FIPS module, only available on OpenSSL 3.x.
 
 [Back to TOC](#table-of-contents)
 
@@ -457,33 +462,37 @@ Sets the default properties for all future EVP algorithm fetches, implicit as we
 
 ### openssl.list_cipher_algorithms
 
-**syntax**: *ret = openssl.list_cipher_algorithms()*
+**syntax**: *ret = openssl.list_cipher_algorithms(hide_provider?)*
 
-Return available cipher algorithms in an array.
+Return available cipher algorithms in an array. Set `hide_provider` to `true` to
+hide provider name from the result.
 
 [Back to TOC](#table-of-contents)
 
 ### openssl.list_digest_algorithms
 
-**syntax**: *ret = openssl.list_digest_algorithms()*
+**syntax**: *ret = openssl.list_digest_algorithms(hide_provider?)*
 
-Return available digest algorithms in an array.
+Return available digest algorithms in an array. Set `hide_provider` to `true` to
+hide provider name from the result.
 
 [Back to TOC](#table-of-contents)
 
 ### openssl.list_mac_algorithms
 
-**syntax**: *ret = openssl.list_mac_algorithms()*
+**syntax**: *ret = openssl.list_mac_algorithms(hide_provider?)*
 
-Return available MAC algorithms in an array.
+Return available MAC algorithms in an array. Set `hide_provider` to `true` to
+hide provider name from the result.
 
 [Back to TOC](#table-of-contents)
 
 ### openssl.list_kdf_algorithms
 
-**syntax**: *ret = openssl.list_kdf_algorithms()*
+**syntax**: *ret = openssl.list_kdf_algorithms(hide_provider?)*
 
-Return available KDF algorithms in an array.
+Return available KDF algorithms in an array. Set `hide_provider` to `true` to
+hide provider name from the result.
 
 [Back to TOC](#table-of-contents)
 
@@ -561,6 +570,71 @@ Free the context that was previously created by [ctx.new](#ctxnew).
 
 [Back to TOC](#table-of-contents)
 
+## resty.openssl.err
+
+A module to provide error messages.
+
+[Back to TOC](#table-of-contents)
+
+### err.format_error
+
+**syntax**: *msg = err.format_error(ctx_msg?, return_code?, all_errors?)*
+
+**syntax**: *msg = err.format_all_errors(ctx_msg?, return_code?)*
+
+Return the latest error message from the last error code. Errors are formatted as:
+
+    [ctx_msg]: code: [return_code]: error:[error code]:[library name]:[func name]:[reason string]:[file name]:[line number]:
+
+On OpenSSL prior to 3.x, errors are formatted as:
+
+    [ctx_msg]: code: [return_code]: [file name]:[line number]:error:[error code]:[library name]:[func name]:[reason string]:
+
+
+If `all_errors` is set to `true`, all errors no just the latest one will be returned in a single string. All errors thrown
+by this library internally only thrown the latest error.
+
+For example:
+
+```lua
+local f = io.open("t/fixtures/ec_key_encrypted.pem"):read("*a")
+local privkey, err = require("resty.openssl.pkey").new(f, {
+    format = "PEM",
+    type = "pr",
+    passphrase = "wrongpasswrod",
+})
+ngx.say(err)
+-- pkey.new:load_key: error:4800065:PEM routines:PEM_do_header:bad decrypt:crypto/pem/pem_lib.c:467:
+```
+
+[Back to TOC](#table-of-contents)
+
+### err.get_last_error_code
+
+**syntax**: *code = err.get_last_error_code()*
+
+Return the last error code.
+
+[Back to TOC](#table-of-contents)
+
+### err.get_lib_error_string
+
+**syntax**: *lib_error_message = err.get_lib_error_string(code?)*
+
+Return the library name of the last error code as string. If `code` is set, return the library name
+corresponding to provided error code instead.
+
+[Back to TOC](#table-of-contents)
+
+### err.get_reason_error_string
+
+**syntax**: *reason_error_message = err.get_reason_error_string(code?)*
+
+Return the reason of the last error code as string. If `code` is set, return the reason
+corresponding to provided error code instead.
+
+[Back to TOC](#table-of-contents)
+
 ## resty.openssl.version
 
 A module to provide version info.
@@ -595,11 +669,6 @@ Returns various OpenSSL version information. Available values for `types` are:
     FULL_VERSION_STRING
     MODULES_DIR
     CPU_INFO
-
-For OpenSSL prior to 1.1.x, only `VERSION`, `CFLAGS`, `BUILT_ON`, `PLATFORM`
-and `DIR` are supported. Please refer to
-[OPENSSL_VERSION_NUMBER(3)](https://www.openssl.org/docs/manmaster/man3/OPENSSL_VERSION_NUMBER.html)
-for explanation of each type.
 
 ```lua
 local version = require("resty.openssl.version")
@@ -647,23 +716,9 @@ A boolean indicates whether the linked OpenSSL is 3.x series.
 
 [Back to TOC](#table-of-contents)
 
-### version.OPENSSL_30
+### version.OPENSSL_111
 
-Deprecated: use `version.OPENSSL_3X` is encouraged.
-
-A boolean indicates whether the linked OpenSSL is 3.0 series.
-
-[Back to TOC](#table-of-contents)
-
-### version.OPENSSL_11
-
-A boolean indicates whether the linked OpenSSL is 1.1 series.
-
-[Back to TOC](#table-of-contents)
-
-### version.OPENSSL_10
-
-A boolean indicates whether the linked OpenSSL is 1.0 series.
+A boolean indicates whether the linked OpenSSL is 1.1.1 series.
 
 [Back to TOC](#table-of-contents)
 
@@ -767,10 +822,6 @@ X25519 | Y | Y | | | Y (ECDH) |
 Ed448 | Y | Y | | Y (PureEdDSA) | |
 X448 | Y | Y | | | Y (ECDH) |
 
-`Ed25519`, `X25519`, `Ed448` and `X448` keys are only supported since OpenSSL 1.1.0.
-
-Note BoringSSL doesn't support `Ed448` and `X448` keys.
-
 Direct support of encryption and decryption for EC and ECX does not exist, but
 processes like ECIES is possible with [pkey:derive](#pkeyderive),
 [kdf](#restyopensslkdf) and [cipher](#restyopensslcipher)
@@ -818,13 +869,16 @@ in provided JSON will decide if a private or public key is loaded.
 from private key part (the `d` parameter) if it's specified.
 - Signatures and verification must use `ecdsa_use_raw` option to work with JWS standards
 for EC keys. See [pkey:sign](#pkeysign) and [pkey.verify](#pkeyverify) for detail.
+- When running outside of OpenResty, needs to install a JSON library (`cjson` or `dkjson`)
+and `basexx`.
+
+[Back to TOC](#table-of-contents)
 
 #### Key generation
 
 **syntax**: *pk, err = pkey.new(config?)*
 
 Generate a new public key or private key.
-
 
 To generate RSA key, `config` table can have `bits` and `exp` field to control key generation.
 When `config` is emitted, this function generates a 2048 bit RSA key with `exponent` of 65537,
@@ -864,6 +918,47 @@ local key, err = pkey.new({
 }) 
 ```
 
+It's also possible to pass raw pkeyopt control strings in `config` table as used in the `genpkey` CLI program.
+See [openssl-genpkey(1)](https://www.openssl.org/docs/man3.0/man1/openssl-genpkey.html) for a list of options.
+
+For example:
+
+```lua
+pkey.new({
+  type = 'RSA',
+  bits = 2048,
+  exp = 65537,
+})
+-- is same as
+pkey.new({
+  type = 'RSA',
+  exp = 65537,
+  "rsa_keygen_bits:4096",
+})
+
+```
+
+[Back to TOC](#table-of-contents)
+
+#### Key composition
+
+**syntax**: *pk, err = pkey.new(config?)*
+
+Compose a public or private key using existing parameters. To see
+list of parameters for each key, refer to [pkey:set_parameters](#pkeyset_parameters).
+
+Only `type` and `params` should exist in `config` table, all other keys will be ignored.
+
+```lua
+local private_bn = require "resty.openssl.bn".new("7F48282CCA4C1A65D589C06DBE9C42AE50FBFFDF3A18CBB48498E1DE47F11BE1A3486CD8FA950D68F111970F922279D8", 16)
+local p_384, err = assert(require("resty.openssl.pkey").new({
+    type = "EC",
+    params = {
+        private = private_bn,
+        group = "secp384r1",
+    }
+}))
+```
 
 [Back to TOC](#table-of-contents)
 
@@ -914,6 +1009,9 @@ local pem, err = pkey.paramgen({
   group = 'ffdhe4096',
 })
 ```
+
+It's also possible to pass raw pkeyopt control strings in `config` table as used in the `genpkey` CLI program.
+See [openssl-genpkey(1)](https://www.openssl.org/docs/man3.0/man1/openssl-genpkey.html) for a list of options.
 
 [Back to TOC](#table-of-contents)
 
@@ -1067,13 +1165,22 @@ This mode only supports RSA and EC keys.
 When passing a string as first parameter, `md_alg` parameter will specify the name
 to use when signing. When `md_alg` is undefined, for RSA and EC keys, this function does SHA256
 by default. For Ed25519 or Ed448 keys, this function does a PureEdDSA signing,
-no message digest should be specified and will not be used. BoringSSL doesn't have default
-digest thus `md_alg` must be specified.
+no message digest should be specified and will not be used.
 
-`opts` is a table that accepts additional parameters.
+For RSA key, it's also possible to specify `padding` scheme with following choices:
 
-For RSA key, it's also possible to specify `padding` scheme. The choice of values are same
-as those in [pkey:encrypt](#pkeyencrypt). When `padding` is `RSA_PKCS1_PSS_PADDING`, it's
+```lua
+  pkey.PADDINGS = {
+    RSA_PKCS1_PADDING       = 1,
+    RSA_SSLV23_PADDING      = 2,
+    RSA_NO_PADDING          = 3,
+    RSA_PKCS1_OAEP_PADDING  = 4,
+    RSA_X931_PADDING        = 5, -- sign only
+    RSA_PKCS1_PSS_PADDING   = 6, -- sign and verify only
+  }
+```
+
+When `padding` is `RSA_PKCS1_PSS_PADDING`, it's
 possible to specify PSS salt length by setting `opts.pss_saltlen`.
 
 For EC key, this function does a ECDSA signing.
@@ -1083,8 +1190,35 @@ obsolete MD5 hash algorithm and will return error on this combination. See
 for a list of algorithms and associated public key algorithms. Normally, the ECDSA signature
 is encoded in ASN.1 DER format. If the `opts` table contains a `ecdsa_use_raw` field with
 a true value, a binary with just the concatenation of binary representation `pr` and `ps` is returned.
-This is useful for example to send the signature as JWS. This feature
-is only supported on OpenSSL 1.1.0 or later.
+This is useful for example to send the signature as JWS.
+
+`opts` is a table that accepts additional parameters with following choices:
+
+```
+{
+  pss_saltlen, -- For PSS mode only this option specifies the salt length.
+  mgf1_md, -- For PSS and OAEP padding sets the MGF1 digest. If the MGF1 digest is not explicitly set in PSS mode then the signing digest is used.
+  oaep_md, -- The digest used for the OAEP hash function. If not explicitly set then SHA1 is used.
+}
+```
+
+It's also possible to pass raw pkeyopt control strings as used in the `pkeyutl` CLI program. This lets user pass in options that
+are not explictly supported as parameters above.
+See [openssl-pkeyutl(1)](https://www.openssl.org/docs/manmaster/man1/openssl-pkeyutl.html) for a list of options.
+
+```lua
+pk:sign(message, nil, pk.PADDINGS.RSA_PKCS1_OAEP_PADDING, {
+  oaep_md = "sha256",
+})
+-- is same as
+pk:sign(message, nil, nil, {
+  "rsa_padding_mode:oaep",
+  "rsa_oaep_md:sha256",
+})
+-- in pkeyutl CLI the above is equivalent to: `openssl pkeyutl -sign -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256
+```
+
+To sign a message without doing message digest, please check [pkey:sign_raw](#pkeysign_raw).
 
 [Back to TOC](#table-of-contents)
 
@@ -1097,7 +1231,8 @@ is only supported on OpenSSL 1.1.0 or later.
 Verify a signture (which can be the string returned by [pkey:sign](#pkey-sign)). The second
 argument must be a [resty.openssl.digest](#restyopenssldigest) instance that uses
 the same digest algorithm as used in `sign` or a string. `ok` returns `true` if verficiation is
-successful and `false` otherwise. Note when verfication failed `err` will not be set.
+successful and `false` otherwise. Note when verfication failed `err` will not be set when used
+with OpenSSL 1.1.1 or lower.
 
 When passing [digest](#restyopenssldigest) instances as second parameter, it should not
 have been called [final()](#digestfinal), user should only use [update()](#digestupdate).
@@ -1106,20 +1241,20 @@ This mode only supports RSA and EC keys.
 When passing a string as second parameter, `md_alg` parameter will specify the name
 to use when verifying. When `md_alg` is undefined, for RSA and EC keys, this function does SHA256
 by default. For Ed25519 or Ed448 keys, this function does a PureEdDSA verification,
-no message digest should be specified and will not be used. BoringSSL doesn't have default
-digest thus `md_alg` must be specified.
+no message digest should be specified and will not be used.
 
-`opts` is a table that accepts additional parameters.
-
-For RSA key, it's also possible to specify `padding` scheme. The choice of values are same
-as those in [pkey:encrypt](#pkeyencrypt). When `padding` is `RSA_PKCS1_PSS_PADDING`, it's
+When key is a RSA key, the function accepts an optional argument `padding` which choices
+of values are same as those in [pkey:sign](#pkeysign). When `padding` is `RSA_PKCS1_PSS_PADDING`, it's
 possible to specify PSS salt length by setting `opts.pss_saltlen`.
 
 For EC key, this function does a ECDSA verification. Normally, the ECDSA signature
 should be encoded in ASN.1 DER format. If the `opts` table contains a `ecdsa_use_raw` field with
 a true value, this library treat `signature` as concatenation of binary representation `pr` and `ps`.
-This is useful for example to verify the signature as JWS. This feature
-is only supported on OpenSSL 1.1.0 or later.
+This is useful for example to verify the signature as JWS.
+
+`opts` is a table that accepts additional parameters which choices
+of values are same as those in [pkey:sign](#pkeysign).
+
 
 ```lua
 -- RSA and EC keys
@@ -1152,38 +1287,34 @@ ngx.say(ngx.encode_base64(signature))
 
 ```
 
+To verify a message without doing message digest, please check [pkey:verify_raw](#pkeyverify_raw) and [pkey:verify_recover](#pkeyverify_recover).
+
 [Back to TOC](#table-of-contents)
 
 ### pkey:encrypt
 
-**syntax**: *cipher_txt, err = pk:encrypt(txt, padding?)*
+**syntax**: *cipher_txt, err = pk:encrypt(txt, padding?, opts?)*
 
 Encrypts plain text `txt` with `pkey` instance, which must loaded a public key.
 
-When key is a RSA key, the function accepts an optional second argument `padding` which can be:
-
-```lua
-  pkey.PADDINGS = {
-    RSA_PKCS1_PADDING       = 1,
-    RSA_SSLV23_PADDING      = 2,
-    RSA_NO_PADDING          = 3,
-    RSA_PKCS1_OAEP_PADDING  = 4,
-    RSA_X931_PADDING        = 5,
-    RSA_PKCS1_PSS_PADDING   = 6,
-  }
-```
-
+The optional second argument `padding` has same meaning as in [pkey:sign](#pkeysign).
 If omitted, `padding` is default to `pkey.PADDINGS.RSA_PKCS1_PADDING`.
+
+The third optional argument `opts` has same meaning as in [pkey:sign](#pkeysign).
+
 
 [Back to TOC](#table-of-contents)
 
 ### pkey:decrypt
 
-**syntax**: *txt, err = pk:decrypt(cipher_txt, padding?)*
+**syntax**: *txt, err = pk:decrypt(cipher_txt, padding?, opts?)*
 
 Decrypts cipher text `cipher_txt` with pkey instance, which must loaded a private key.
 
-The optional second argument `padding` has same meaning in [pkey:encrypt](#pkeyencrypt).
+The optional second argument `padding` has same meaning as in [pkey:sign](#pkeysign).
+If omitted, `padding` is default to `pkey.PADDINGS.RSA_PKCS1_PADDING`.
+
+The third optional argument `opts` has same meaning as in [pkey:sign](#pkeysign).
 
 ```lua
 local pkey = require("resty.openssl.pkey")
@@ -1202,11 +1333,14 @@ ngx.say(decrypted)
 
 ### pkey:sign_raw
 
-**syntax**: *signature, err = pk:sign_raw(txt, padding?)*
+**syntax**: *signature, err = pk:sign_raw(txt, padding?, opts?)*
 
 Signs the cipher text `cipher_txt` with pkey instance, which must loaded a private key.
 
-The optional second argument `padding` has same meaning in [pkey:encrypt](#pkeyencrypt).
+The optional second argument `padding` has same meaning as in [pkey:sign](#pkeysign).
+If omitted, `padding` is default to `pkey.PADDINGS.RSA_PKCS1_PADDING`.
+
+The third optional argument `opts` has same meaning as in [pkey:sign](#pkeysign).
 
 This function may also be called "private encrypt" in some implementations like NodeJS or PHP.
 Do note as the function names suggested, this function is not secure to be regarded as an encryption.
@@ -1218,14 +1352,36 @@ for an example.
 
 [Back to TOC](#table-of-contents)
 
+### pkey:verify_raw
+
+**syntax**: *ok, err = pk:verify_raw(signature, data, md_alg, padding?, opts?)*
+
+Verify the cipher text `signature` with the message `data` with pkey instance, which must loaded a public key. Set the message digest to `md_alg` but doesn't do message digest
+automatically, in other words, this function assumes `data` has already been hashed with `md_alg`.
+
+When `md_alg` is undefined, for RSA and EC keys, this function does SHA256 by default. For Ed25519 or Ed448 keys, no default value is set.
+
+The optinal fourth argument `padding` has same meaning as in [pkey:sign](#pkeysign).
+If omitted, `padding` is default to `pkey.PADDINGS.RSA_PKCS1_PADDING`.
+
+The fifth optional argument `opts` has same meaning as in [pkey:sign](#pkeysign).
+
+See [examples/raw-sign-and-recover.lua](https://github.com/fffonion/lua-resty-openssl/blob/master/examples/raw-sign-and-recover.lua)
+for an example.
+
+[Back to TOC](#table-of-contents)
+
 ### pkey:verify_recover
 
-**syntax**: *txt, err = pk:verify_recover(signature, padding?)*
+**syntax**: *txt, err = pk:verify_recover(signature, padding?, opts?)*
 
 Verify the cipher text `signature` with pkey instance, which must loaded a public key, and also
 returns the original text being signed. This operation is only supported by RSA key.
 
-The optional second argument `padding` has same meaning in [pkey:encrypt](#pkeyencrypt).
+The optional second argument `padding` has same meaning as in [pkey:sign](#pkeysign).
+If omitted, `padding` is default to `pkey.PADDINGS.RSA_PKCS1_PADDING`.
+
+The third optional argument `opts` has same meaning as in [pkey:sign](#pkeysign).
 
 This function may also be called "public decrypt" in some implementations like NodeJS or PHP.
 
@@ -1281,8 +1437,20 @@ Module to expose BIGNUM structure. Note bignum is a big integer, no float operat
 
 **syntax**: *b, err = bn.new(number?)*
 
-Creates a `bn` instance. The first argument can be a Lua number or `nil` to
-creates an empty instance.
+**syntax**: *b, err = bn.new(string?, base?)*
+
+Creates a `bn` instance. The first argument can be:
+
+- `nil` to creates an empty bn instance.
+- A Lua number to initialize the bn instance.
+- A string to initialize the bn instance. The second argument `base` specifies the base of the string,
+and can take value from (compatible with Ruby OpenSSL.BN API):
+  - `10` or omitted, for decimal string (`"23333"`)
+  - `16`, for hex encoded string (`"5b25"`)
+  - `2`, for binary string (`"\x5b\x25"`)
+  - `0`, for MPI formated string (`"\x00\x00\x00\x02\x5b\x25"`)
+
+MPI is a format that consists of the number's length in bytes represented as a 4-byte big-endian number, and the number itself in big-endian format, where the most significant bit signals a negative number (the representation of numbers with the MSB set is prefixed with null byte).
 
 [Back to TOC](#table-of-contents)
 
@@ -1302,6 +1470,17 @@ Returns `true` if table is an instance of `bn`. Returns `false` otherwise.
 
 [Back to TOC](#table-of-contents)
 
+### bn.set
+
+**syntax**: *b, err = bn:set(number)*
+
+**syntax**: *b, err = bn:set(string, base?)*
+
+Reuse the existing bn instance and reset its value with given number or string.
+Refer to [bn.new](#bnnew) for the type of arguments supported.
+
+[Back to TOC](#table-of-contents)
+
 ### bn.from_binary, bn:to_binary
 
 **syntax**: *bn, err = bn.from_binary(bin)*
@@ -1313,14 +1492,35 @@ Creates a `bn` instance from binary string.
 Exports the BIGNUM value in binary string.
 
 `bn:to_binary` accepts an optional number argument `padto` that can be
-used to pad leading zeros to the output to a specific length. This feature
-is only supported on OpenSSL 1.1.0 or later.
+used to pad leading zeros to the output to a specific length.
 
 ```lua
-local b, err = require("resty.openssl.bn").from_binary(ngx.decode_base64("WyU="))
+local to_hex = require "resty.string".to_hex
+local b, err = require("resty.openssl.bn").from_binary("\x5b\x25")
 local bin, err = b:to_binary()
-ngx.say(ngx.encode_base64(bin))
--- outputs "WyU="
+ngx.say(to_hex(bin))
+-- outputs "5b25
+```
+
+[Back to TOC](#table-of-contents)
+
+### bn.from_mpi, bn:to_mpi
+
+**syntax**: *bn, err = bn.from_mpi(bin)*
+
+**syntax**: *bin, err = bn:to_mpi()*
+
+Creates a `bn` instance from MPI formatted binary string.
+
+Exports the BIGNUM value in MPI formatted binary string.
+
+
+```lua
+local to_hex = require "resty.string".to_hex
+local b, err = require("resty.openssl.bn").from_mpi("\x00\x00\x00\x02\x5b\x25")
+local bin, err = b:to_mpi()
+ngx.say(to_hex(bin))
+-- outputs "000000025b25
 ```
 
 [Back to TOC](#table-of-contents)
@@ -1585,6 +1785,20 @@ to explictly select provider to fetch algorithms.
 **syntax**: *ok = cipher.istype(table)*
 
 Returns `true` if table is an instance of `cipher`. Returns `false` otherwise.
+
+[Back to TOC](#table-of-contents)
+
+### cipher.set_buffer_size
+
+**syntax**: *ok = cipher.set_buffer_size(sz)*
+
+Resize the internal buffer size used by all cipher instance. The default buffer size is 1024 bytes.
+
+If you are expecting to pass input text larger than 1024 bytes at one time to `update()`, `encrypt()`
+or `decrypt()`, setting the buffer to larger than the expected input size will improve performance
+by let more code to be JIT-able.
+
+Avoid call this function at hotpath, as this re-allocate the buffer every time it's called.
 
 [Back to TOC](#table-of-contents)
 
@@ -1860,6 +2074,8 @@ Reset the internal state of `digest` instance as it's just created by [digest.ne
 It calls [EVP_DigestInit_ex](https://www.openssl.org/docs/manmaster/man3/EVP_DigestInit_ex.html) under
 the hood.
 
+User must call this before reusing the same `digest` instance.
+
 [Back to TOC](#table-of-contents)
 
 ## resty.openssl.hmac
@@ -1929,6 +2145,8 @@ Reset the internal state of `hmac` instance as it's just created by [hmac.new](#
 It calls [HMAC_Init_ex](https://www.openssl.org/docs/manmaster/man3/HMAC_Init_ex.html) under
 the hood.
 
+User must call this before reusing the same `hmac` instance.
+
 [Back to TOC](#table-of-contents)
 
 ## resty.openssl.mac
@@ -1941,10 +2159,13 @@ Module to interact with message authentication code (EVP_MAC).
 
 **syntax**: *h, err = mac.new(key, mac, cipher?, digest?, properties?)*
 
-Creates a mac instance. `mac` is a case-insensitive string of digest algorithm name.
+Creates a mac instance. `mac` is a case-insensitive string of MAC algorithm name.
 To view a list of digest algorithms implemented, use
 [openssl.list_mac_algorithms](#openssllist_mac_algorithms) or
 `openssl list -mac-algorithms`.
+
+At least one of `cipher` or `digest` must be specified.
+
 `cipher` is a case-insensitive string of digest algorithm name.
 To view a list of digest algorithms implemented, use
 [openssl.list_cipher_algorithms](#openssllist_cipher_algorithms) or
@@ -2011,6 +2232,16 @@ ngx.say(ngx.encode_base64(mac))
 
 [Back to TOC](#table-of-contents)
 
+### mac:reset
+
+**syntax**: *ok, err = mac:reset()*
+
+Reset the internal state of `mac` instance as it's just created by [mac.new](#macnew).
+It calls [EVP_MAC_Init](https://www.openssl.org/docs/manmaster/man3/EVP_MAC_init.html) under
+the hood.
+
+User must call this before reusing the same `mac` instance.
+
 ## resty.openssl.kdf
 
 Module to interact with KDF (key derivation function).
@@ -2026,8 +2257,7 @@ instead.
 
 Derive a key from given material. Various KDFs are supported based on OpenSSL version:
 
-- On OpenSSL 1.0.2 and later, `PBKDF2`([RFC 2898], [NIST SP 800-132]) is available.
-- On OpenSSL 1.1.0 and later, `HKDF`([RFC 5869]), `TLS1-PRF`([RFC 2246], [RFC 5246] and [NIST SP 800-135 r1]) and `scrypt`([RFC 7914]) is available.
+`PBKDF2`([RFC 2898], [NIST SP 800-132]), `HKDF`([RFC 5869]), `TLS1-PRF`([RFC 2246], [RFC 5246] and [NIST SP 800-135 r1]) and `scrypt`([RFC 7914]) is available.
 
 
 `options` is a table that contains:
@@ -2043,7 +2273,7 @@ Derive a key from given material. Various KDFs are supported based on OpenSSL ve
 to explictly select provider to fetch algorithms. | |
 | pbkdf2_iter     | number | PBKDF2 iteration count. RFC 2898 suggests an iteration count of at least 1000. Any value less than 1 is treated as a single iteration.  | `1` |
 | hkdf_key     | string | HKDF key  | **required** |
-| hkdf_mode     | number | HKDF mode to use, one of `kdf.HKDEF_MODE_EXTRACT_AND_EXPAND`, `kdf.HKDEF_MODE_EXTRACT_ONLY` or `kdf.HKDEF_MODE_EXPAND_ONLY`. This is only effective with OpenSSL >= 1.1.1. To learn about mode, please refer to [EVP_PKEY_CTX_set1_hkdf_key(3)](https://www.openssl.org/docs/manmaster/man3/EVP_PKEY_CTX_set1_hkdf_key.html). Note with `kdf.HKDEF_MODE_EXTRACT_ONLY`, `outlen` is ignored and the output will be fixed size of `HMAC-<md>`.  | `kdf.HKDEF_MODE_EXTRACT_AND_EXPAND`|
+| hkdf_mode     | number | HKDF mode to use, one of `kdf.HKDEF_MODE_EXTRACT_AND_EXPAND`, `kdf.HKDEF_MODE_EXTRACT_ONLY` or `kdf.HKDEF_MODE_EXPAND_ONLY`. To learn about mode, please refer to [EVP_PKEY_CTX_set1_hkdf_key(3)](https://www.openssl.org/docs/manmaster/man3/EVP_PKEY_CTX_set1_hkdf_key.html). Note with `kdf.HKDEF_MODE_EXTRACT_ONLY`, `outlen` is ignored and the output will be fixed size of `HMAC-<md>`.  | `kdf.HKDEF_MODE_EXTRACT_AND_EXPAND`|
 | hkdf_info     | string | HKDF info value  | (empty string) |
 | tls1_prf_secret     | string | TLS1-PRF secret  | **required** |
 | tls1_prf_seed     | string | TLS1-PRF seed  | **required** |
@@ -2181,6 +2411,8 @@ This function is available since OpenSSL 3.0.
 **syntax**: *ok, err = kdf:reset()*
 
 Reset the internal state of `kdf` instance as it's just created by [kdf.new](#kdfnew).
+
+User must call this before reusing the same `kdf` instance.
 
 [Back to TOC](#table-of-contents)
 
@@ -2586,8 +2818,6 @@ Sign the certificate using the private key specified by `pkey`, which must be a
 parameter to set digest method, whichmust be a [resty.openssl.digest](#restyopenssldigest) instance.
 Returns a boolean indicating if signing is successful and error if any.
 
-In BoringSSL when `digest` is not set it's fallback to `SHA256`.
-
 [Back to TOC](#table-of-contents)
 
 ### x509:verify
@@ -2797,8 +3027,6 @@ Sign the certificate request using the private key specified by `pkey`, which mu
 [resty.openssl.pkey](#restyopensslpkey) that stores private key. Optionally accept `digest`
 parameter to set digest method, whichmust be a [resty.openssl.digest](#restyopenssldigest) instance.
 Returns a boolean indicating if signing is successful and error if any.
-
-In BoringSSL when `digest` is not set it's fallback to `SHA256`.
 
 [Back to TOC](#table-of-contents)
 
@@ -3013,8 +3241,6 @@ Sign the CRL using the private key specified by `pkey`, which must be a
 [resty.openssl.pkey](#restyopensslpkey) that stores private key. Optionally accept `digest`
 parameter to set digest method, whichmust be a [resty.openssl.digest](#restyopenssldigest) instance.
 Returns a boolean indicating if signing is successful and error if any.
-
-In BoringSSL when `digest` is not set it's fallback to `SHA256`.
 
 [Back to TOC](#table-of-contents)
 
@@ -3967,8 +4193,6 @@ to explictly select provider to fetch algorithms.
 Returns `true` when the certificate isn't revoked,
 otherwise returns `nil` and error explaining the reason.
 
-Note this function is supported from OpenSSL 1.1.0 and not supported in BoringSSL.
-
 [Back to TOC](#table-of-contents)
 
 ## resty.openssl.x509.revoked
@@ -4533,7 +4757,7 @@ Copyright and License
 
 This module is licensed under the BSD license.
 
-Copyright (C) 2019-2020, by fffonion <fffonion@gmail.com>.
+Copyright (C) 2019-2023, by fffonion <fffonion@gmail.com>.
 
 All rights reserved.
 
@@ -4551,7 +4775,7 @@ See Also
 ========
 * [luaossl](https://github.com/wahern/luaossl)
 * [API/ABI changes review for OpenSSL](https://abi-laboratory.pro/index.php?view=timeline&l=openssl)
-* [OpenSSL API manual](https://www.openssl.org/docs/man1.1.1/man3/)
+* [OpenSSL API manual](https://www.openssl.org/docs/man3.1/man3/)
 
 [Back to TOC](#table-of-contents)
 

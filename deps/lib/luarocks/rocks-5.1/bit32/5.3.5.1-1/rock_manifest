@@ -5,6 +5,6 @@ rock_manifest = {
       ["README.md"] = "0f5f506e9b1697622bf4a2e0faeb1746"
    },
    lib = {
-      ["bit32.so"] = "c1e7fb1ec46fd6c8e514ed4b7be24878"
+      ["bit32.so"] = "7cde7a8e135feb857f1d6528365e9468"
    }
 }

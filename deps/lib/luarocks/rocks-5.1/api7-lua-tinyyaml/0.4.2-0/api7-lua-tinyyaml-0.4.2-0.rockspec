@@ -1,8 +1,8 @@
 package = "api7-lua-tinyyaml"
-version = "0.4.4-0"
+version = "0.4.2-0"
 source = {
    url = "git://github.com/api7/lua-tinyyaml",
-   tag = "v0.4.4"
+   tag = "v0.4.2"
 }
 
 description = {

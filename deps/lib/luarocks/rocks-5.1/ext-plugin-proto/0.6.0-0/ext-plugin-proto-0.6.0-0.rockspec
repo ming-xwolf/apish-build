@@ -1,8 +1,8 @@
 package = "ext-plugin-proto"
-version = "0.6.1-0"
+version = "0.6.0-0"
 source = {
    url = "git://github.com/api7/ext-plugin-proto",
-   branch = "v0.6.1",
+   branch = "v0.6.0",
 }
 
 description = {

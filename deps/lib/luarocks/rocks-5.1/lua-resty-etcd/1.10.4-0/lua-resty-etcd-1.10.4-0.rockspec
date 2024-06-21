@@ -1,8 +1,8 @@
 package = "lua-resty-etcd"
-version = "1.10.5-0"
+version = "1.10.4-0"
 source = {
    url = "git://github.com/api7/lua-resty-etcd",
-   tag = "v1.10.5"
+   tag = "v1.10.4"
 }
 
 description = {
@@ -13,7 +13,7 @@ description = {
 }
 
 dependencies = {
-   "api7-lua-resty-http = 0.2.2-0",
+   "api7-lua-resty-http = 0.1.0",
    "lua-protobuf = 0.4.1",
    "luafilesystem = 1.7.0-2",
    "penlight = 1.9.2-1",

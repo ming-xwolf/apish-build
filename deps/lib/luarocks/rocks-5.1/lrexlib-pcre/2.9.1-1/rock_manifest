@@ -7,7 +7,7 @@ rock_manifest = {
       ["manual.txt"] = "ff3180790f1087e7be231e147cef77f1"
    },
    lib = {
-      ["rex_pcre.so"] = "941f81fea859936526ae2a4e77ee38f3"
+      ["rex_pcre.so"] = "efd7658cacaf884a0511af184914bcd0"
    },
    ["lrexlib-pcre-2.9.1-1.rockspec"] = "8bf832d3bcb73c3c971e857f78ec0337"
 }

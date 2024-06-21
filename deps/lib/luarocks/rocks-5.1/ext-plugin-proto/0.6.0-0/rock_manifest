@@ -3,7 +3,7 @@ rock_manifest = {
       LICENSE = "1ff80d1acf005954ea912955f2fa685b",
       ["README.md"] = "d4d59583604e94706f49465165957ed4"
    },
-   ["ext-plugin-proto-0.6.1-0.rockspec"] = "1f6d21a8bceae517a399a0a70b845749",
+   ["ext-plugin-proto-0.6.0-0.rockspec"] = "26f2bb41e35c0fb4cc25827fdd3c64e8",
    lua = {
       A6 = {
          DataEntry = {
@@ -60,9 +60,9 @@ rock_manifest = {
             },
             ["Resp.lua"] = "67b1cdf3cdc299a74fce27700c280126",
             Rewrite = {
-               ["lua.lua"] = "38f554725fc1c402137cc8516a8fc389"
+               ["lua.lua"] = "89730116d5c8d4cbe8516bf7fd4b9591"
             },
-            ["Rewrite.lua"] = "38f554725fc1c402137cc8516a8fc389",
+            ["Rewrite.lua"] = "89730116d5c8d4cbe8516bf7fd4b9591",
             Stop = {
                ["lua.lua"] = "a9413e0dfbd0214ab60a41b3009db23e"
             },

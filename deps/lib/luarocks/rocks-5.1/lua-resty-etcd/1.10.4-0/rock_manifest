@@ -3,7 +3,7 @@ rock_manifest = {
       LICENSE = "86d3f3a95c324c9479bd8986968f4327",
       ["MAINTAINING.md"] = "8651301b9b7bbc10d318d6f306db3595",
       ["README.md"] = "376fa05cfd658dbb12c764db50e6eb7f",
-      ["api_v3.md"] = "29e00730c838f69de833dc48071eb6a2",
+      ["api_v3.md"] = "9fa62cdf1319dd20002475e6f803c3b2",
       ["health_check.md"] = "5014a293137761987ec77edfcaf3a0cd"
    },
    lua = {
@@ -16,10 +16,10 @@ rock_manifest = {
                ["raw.lua"] = "c7268ab622ec4c9b5a0a2ad9edc8f45f"
             },
             ["utils.lua"] = "8fccad3812b5832c1233d73ff1816086",
-            ["v3.lua"] = "5f120d2210708dbfecb2f4ff5f5cafd6"
+            ["v3.lua"] = "da458d4236ef34a253d6d92510c387a9"
          },
          ["etcd.lua"] = "306f771b3d16d09cfd3f216d23db1491"
       }
    },
-   ["lua-resty-etcd-1.10.5-0.rockspec"] = "e947dd2d17cd5a295074f64999ab783b"
+   ["lua-resty-etcd-1.10.4-0.rockspec"] = "efe1696924a79f95b5023b083dad0bac"
 }

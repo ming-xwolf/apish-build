@@ -4,7 +4,7 @@ rock_manifest = {
       ["README.md"] = "00b901464ea67739f6b53509247fca14"
    },
    lib = {
-      ["librestyradixtree.so"] = "f6cf62e5d63cb7236839937b31731a24"
+      ["librestyradixtree.so"] = "89a6a4223dbb77d16d0b38fe062a19b6"
    },
    lua = {
       resty = {
